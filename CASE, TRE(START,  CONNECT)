@@ -1,0 +1,51 @@
+# MYSQL
+
+# CASE의 활용법 및 트리 구조를 표현할때 START와 CONNECT로 표현함
+
+SELECT
+    ROW_NUMBER() OVER(ORDER BY C.ASSGMT_NTC_LVL, C.ASSGMT_NTC_SEQ ASC) AS RNUM
+  , A.MDC_SPPRT_UC          /* 부대코드 */
+  , A.HUCD                  /* 상위부대코드 */
+  , A.UNIT_BRCD             /* 부대분류코드 */
+  , A.PSNCHRG_HR_INTG_ID    /* 담당자 인사통합ID */
+  , A.DSPC_FCNCD            /* 직위임무코드 */
+  , A.TOTAL_CORPMN_NMBR     /* 총인원수 */
+  , A.INSP_ORGAN_YN         /* 검사기관여부 */
+  , TO_CHAR(A.THEFST_RGST_DTTM,'YYYY-MM-DD') AS THEFST_RGST_DTTM
+  , C.UNIT_NM || '(' ||
+        (
+            SELECT COUNT(*)
+            FROM TCSV_MDC_SPPRT_LN_UMGT A1
+            LEFT JOIN TCSV_MDC_SPPRT_LN_UMGT A2
+            WHERE A2.HUCD = A1.MDC_SPPRT_UC
+        )
+    || ')' AS UNIT_NM
+  , C.MDCD
+  , CASE C.MDCD
+        WHEN '1' THEN '국방부'
+        WHEN '2' THEN '육군'
+        WHEN '5' THEN '해군'
+        WHEN '6' THEN '공군'
+        WHEN '7' THEN '합참'
+        ELSE ''
+    END MD_NAME
+  , REPLACE(C.ASSGMT_WHL_UNIT_NM,'||',' ') AS ASSGMT_WHL_UNIT_NM
+FROM TCSV_MDC_SPPRT_LN_UMGT A
+LEFT JOIN TNSV_HR_INTG B
+    ON A.PSNCHRG_HR_INTG_ID = B.HR_INTG_ID
+LEFT JOIN
+(
+    SELECT
+        LEVEL AS LVL,
+        a.*
+    FROM TCIC_UNIT a
+    WHERE
+        MDCD IN ('1','2','3','5','6','7')
+        AND WTPTDVCD IN ('2','3')
+        AND REPLACE(ASSGMT_WHL_UNIT_NM,'||',' ') LIKE '%'||?||'%'
+    START WITH A.ASSGMT_HUCD = '0'
+    CONNECT BY PRIOR A.UC = A.ASSGMT_HUCD
+    AND LEVEL <= 3
+    ORDER SIBLINGS BY A.ASSGMT_NTC_SEQ
+) C
+ON A.MDC_SPPRT_UC = C.UC;
