@@ -1,0 +1,47 @@
+# 일련번호를 insert 할때 날짜와 생성 ID 10자리 일때 경우 
+
+INSERT INTO TNSP_DSPRVT_ENTPRZ_MGT (
+    DSPRVT_ENTPRZ_ID        /* 사업업체ID */
+  , MGT_UC                  /* 관리부대코드 */
+  , MGT_PSNCHRG_RANK_FULLNM /* 관리담당자계급성명 */
+  , ENTPRZ_NM               /* 업체명 */
+  , ENTPRZ_PSNCHRG_NM       /* 업체담당자명 */
+  , ENTPRZ_TELNO            /* 업체전화번호 */
+  , CTRT_STARTDT            /* 계약시작일자 */
+  , CTRT_ENDDT              /* 계약종료일자 */
+  , ENTPRZ_ADDR             /* 업체주소 */
+  , ENTPRZ_SPCITM_CNTNT     /* 업체특이사항내용 */
+  , USE_YN                  /* 사용여부 */
+  , THEFST_RGST_DTTM        /* 최초등록일시 */
+  , THEFST_REGSTR_SN        /* 최초등록자일련번호 */
+  , THEFST_RGST_IP          /* 최초등록IP */
+  , FNL_MDFR_DTTM           /* 최종수정일시 */
+  , FNL_MDFR_SN             /* 최종수정자일련번호 */
+  , FNL_MDFR_IP             /* 최종수정IP */
+)
+
+SELECT
+    TO_CHAR(SYSDATE,'YYMM')
+    || LPAD(
+         NVL(MAX(TO_NUMBER(SUBSTR(DSPRVT_ENTPRZ_ID,5,4))),0)+1
+       ,4,'0')
+
+  , #{mgtUc}
+  , #{mgtPsnchrgRankFullnm}
+  , #{entprzNm}
+  , #{entprzPsnchrgNm}
+  , #{entprzTelno}
+  , #{ctrtStartdt}
+  , #{ctrtEnddt}
+  , #{entprzAddr}
+  , #{entprzSpcitmCntnt}
+  , 'Y'
+  , SYSDATE
+  , #{ssUserSn}
+  , #{ssCntnIp}
+  , SYSDATE
+  , #{ssUserSn}
+  , #{ssCntnIp}
+
+FROM TNSP_DSPRVT_ENTPRZ_MGT
+WHERE SUBSTR(DSPRVT_ENTPRZ_ID,1,4) = TO_CHAR(SYSDATE,'YYYY')
